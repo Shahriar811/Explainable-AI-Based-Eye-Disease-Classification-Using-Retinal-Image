@@ -1,0 +1,181 @@
+GLOBAL API ACCESS — STEP BY STEP (CSE498 Eye Disease Detection)
+================================================================
+
+GOAL
+----
+Make your FastAPI model server (which currently runs on your PC at
+http://127.0.0.1:8000) reachable from anywhere on the internet so that:
+  - Your Android app (CSE498r) can call it from mobile data / any WiFi
+  - Anyone with the URL can access /docs in a browser
+
+This folder does NOT duplicate your API. It reuses the server in:
+  D:\CSE498 Research Updated\API
+
+It just adds a public HTTPS tunnel (ngrok) in front of it.
+
+
+WHY NGROK?
+----------
+- Free
+- Gives HTTPS automatically (Android apps prefer this)
+- No need to open router ports or buy a domain
+- Public URL starts working in under a minute
+
+Downside (free plan):
+- Each time you restart, you get a new random URL like
+  https://abcd-1234.ngrok-free.app
+  For a permanent URL, see Section 6 at the bottom.
+
+
+PREREQUISITES
+-------------
+- Your API already works locally (you can open http://127.0.0.1:8000/docs on your PC).
+- You have internet on your PC.
+- You can run PowerShell.
+
+
+================================================================
+STEP 1  —  Create a free ngrok account (one-time, ~2 minutes)
+================================================================
+1. Open: https://dashboard.ngrok.com/signup
+2. Sign up (email + password, or GitHub/Google).
+3. After login, open:
+   https://dashboard.ngrok.com/get-started/your-authtoken
+4. Copy the long token shown there (it looks like:
+   2abCdEfGh1234567890IJKLMN_abCDefGhiJkLmNoPqRsTuVwX).
+
+
+================================================================
+STEP 2  —  Paste the token into a file
+================================================================
+1. In this folder, create a new text file named exactly:
+       ngrok_token.txt
+   (or copy ngrok_token.txt.example and rename it)
+2. Open it with Notepad, paste the token as the only content, save.
+
+NOTE: This file is private. Do not share it.
+
+
+================================================================
+STEP 3  —  Run the one-click script
+================================================================
+Open PowerShell and run:
+
+    cd "D:\CSE498 Research Updated\API Global"
+    .\expose.ps1
+
+What the script does automatically:
+  1. Downloads ngrok.exe if missing
+  2. Registers your authtoken
+  3. Starts the FastAPI server in a SEPARATE PowerShell window
+     (bound to 127.0.0.1:8000 — not exposed directly)
+  4. Waits for the API to come up
+  5. Opens a public HTTPS tunnel and prints your URL
+
+
+================================================================
+STEP 4  —  Grab your public URL
+================================================================
+After a few seconds, you'll see ngrok output like:
+
+    Session Status     online
+    Forwarding         https://abcd-1234.ngrok-free.app -> http://localhost:8000
+
+Copy that "https://....ngrok-free.app" URL.
+
+Test it from anywhere (phone on mobile data, another laptop, etc.):
+    https://abcd-1234.ngrok-free.app/         <- friendly web UI (recommended)
+    https://abcd-1234.ngrok-free.app/docs     <- interactive API docs (for developers)
+    https://abcd-1234.ngrok-free.app/models   <- raw JSON list of loaded models
+
+The web UI at "/" lets you:
+    - pick a model from a dropdown (no need to type any filenames)
+    - drop or browse a retinal image
+    - see the predicted disease + confidence + top probabilities
+
+
+================================================================
+STEP 5  —  Use it in your Android app (CSE498r)
+================================================================
+1. Open the CSE498r app on your phone (any network, including mobile data).
+2. In the "Base URL" field, paste:
+       https://abcd-1234.ngrok-free.app/
+   (IMPORTANT: include the trailing slash)
+3. Tap "Save & Load Models".
+4. Pick a model, pick an image (gallery or camera), press Predict.
+
+That's it — your model is now globally accessible.
+
+
+================================================================
+STEP 6  —  Stopping the server
+================================================================
+Option A (graceful):
+  - Press Ctrl+C in the ngrok window to stop the public tunnel.
+  - Press Ctrl+C in the API window to stop the API.
+
+Option B (force stop everything):
+    cd "D:\CSE498 Research Updated\API Global"
+    .\stop.ps1
+
+
+================================================================
+STEP 7  —  Common issues
+================================================================
+
+Q: The Android app says "failed to load models" when using the ngrok URL.
+A: Make sure you included the trailing slash. It must be:
+       https://abcd-1234.ngrok-free.app/
+   NOT
+       https://abcd-1234.ngrok-free.app
+
+Q: The ngrok URL changes every time I restart.
+A: Yes, that's the free plan. Two options to get a permanent URL:
+     1. ngrok paid plan (static domain), or
+     2. Cloudflare Tunnel (free, but needs a domain name on Cloudflare).
+   See "PERMANENT URL" below.
+
+Q: ngrok shows a warning page before the API.
+A: That's the free-plan browser warning (visit-count page). It does NOT block
+   the Android app — API calls work fine. You can click "Visit Site" in a
+   browser to bypass once.
+
+Q: My PC sleeps / I shut down my laptop.
+A: The URL stops working until you run expose.ps1 again. For 24/7 uptime,
+   deploy to a VPS (see "RUN 24/7" below).
+
+
+================================================================
+PERMANENT URL (optional, more advanced)
+================================================================
+If you want the SAME URL every time (e.g. https://api.yoursite.com),
+the free path is Cloudflare Tunnel:
+
+  1. Buy or already own a domain (even a cheap $2 one works).
+  2. Move its DNS to Cloudflare (free).
+  3. Install 'cloudflared' on your PC.
+  4. Run:  cloudflared tunnel login
+  5. Run:  cloudflared tunnel create cse498
+  6. Map a subdomain (e.g. cse498-api.yoursite.com) to
+     http://localhost:8000 via config.yml.
+  7. Run:  cloudflared tunnel run cse498
+
+Result: https://cse498-api.yoursite.com/  works from anywhere, permanently
+        (as long as your PC is running).
+
+
+================================================================
+RUN 24/7 (optional, recommended for production)
+================================================================
+If you want the API online even when your laptop is off, put it on a
+cheap Linux VPS (Hetzner/DigitalOcean/Contabo/etc., ~$4-6 / month):
+
+  1. Copy the 'API' folder and the 'CSE498R models' folder to the VPS.
+  2. Install Python 3.11, then:
+       pip install -r requirements.txt
+  3. Run:
+       python -m uvicorn server.main:app --host 0.0.0.0 --port 8000
+  4. Put Caddy or Nginx in front for free HTTPS.
+  5. Use that public URL in the Android app.
+
+At that point you don't need ngrok anymore — you have a real production URL.

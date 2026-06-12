@@ -1,0 +1,16 @@
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.6
+python-multipart>=0.0.9
+pillow>=10.0
+numpy>=1.24
+
+# PyTorch stack for loading/running *_bundle.pth
+torch
+torchvision
+timm
+
+# Explainable AI (Grad-CAM++ heatmaps)
+grad-cam>=1.5
+opencv-python>=4.5
+

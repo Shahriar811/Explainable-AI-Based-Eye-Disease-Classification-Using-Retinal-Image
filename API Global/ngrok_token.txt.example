@@ -1,0 +1,5 @@
+Paste your ngrok authtoken below on a single line (remove this text first).
+
+Get it from: https://dashboard.ngrok.com/get-started/your-authtoken
+
+Then save this file as:  ngrok_token.txt   (remove the .example)

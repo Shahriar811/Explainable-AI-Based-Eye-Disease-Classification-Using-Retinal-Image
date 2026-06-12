@@ -1,0 +1,24 @@
+Here's how to do it step by step:
+
+Step 1 — Find your PC's IP address
+powershellipconfig
+Look for IPv4 Address under your active adapter (WiFi or Ethernet). It'll look like 192.168.x.x.
+
+Step 2 — Start the server accessible on the network
+Open a new PowerShell window and run:
+$env:API_HOST="0.0.0.0"
+$env:API_PORT="8000"
+cd "D:\CSE498 Research Updated\API"
+.\run.ps1
+
+Step 3 — Allow port 8000 through Windows Firewall
+Run this as Administrator in PowerShell:
+powershellNew-NetFirewallRule -DisplayName "FastAPI Port 8000" -Direction Inbound -Protocol TCP -LocalPort 8000 -Action Allow
+
+Step 4 — Test from another device
+On your phone or another PC connected to the same WiFi, open a browser and go to:
+http://192.168.x.x:8000/docs
+Replace 192.168.x.x with your actual IP from Step 1.
+
+Step 5 — Test the client from edge device
+If running client_example.py from another machine, update the server URL inside the script to point to your PC's IP instead of 127.0.0.1. Share the script if you want me to do that for you.

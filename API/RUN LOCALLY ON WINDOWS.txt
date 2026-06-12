@@ -1,0 +1,14 @@
+IMPORTANT (PyTorch compatibility):
+  This API requires PyTorch. If you only have Python 3.13 installed, Torch may fail to install.
+  Recommended: install Python 3.11 (64-bit) and ensure the Windows "py" launcher can find it.
+
+Open PowerShell and run:
+
+  cd "D:\CSE498 Research Updated\API"
+  .\run.ps1
+
+Then open:
+  http://127.0.0.1:8000/docs
+
+Check that your models show up at:
+  http://127.0.0.1:8000/models

@@ -1,0 +1,20 @@
+open terminal and paste:
+cd "D:\CSE498 Research Updated\API"
+
+paste this:
+$env:API_HOST='127.0.0.1'; $env:API_PORT='8000'; .\run.ps1
+
+
+open a second PowerShell window and run the ngrok tunnel:
+cd "D:\CSE498 Research Updated\API Global"
+.\expose.ps1
+
+
+
+
+open in any browser (friendly web UI — pick a model from the dropdown and
+upload a retinal image, no need to paste anything):
+https://unmindful-handoff-erratic.ngrok-free.dev/
+
+(developers only) interactive API reference:
+https://unmindful-handoff-erratic.ngrok-free.dev/docs

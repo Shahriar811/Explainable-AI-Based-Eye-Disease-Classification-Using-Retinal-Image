@@ -1,0 +1,108 @@
+MODEL SERVING API (for edge devices) — STEP BY STEP
+===================================================
+
+This "API" folder is a standalone HTTP server that serves your trained model bundles:
+  *_bundle.pth
+
+It exposes:
+  GET  /models
+  POST /predict?model_id=...&top_k=...
+
+
+1) WHERE YOUR MODELS ARE
+-----------------------
+By default the server looks for bundles here:
+  ..\CSE498R models
+
+That means the bundles should be in:
+  D:\CSE498 Research Updated\CSE498R models\*_bundle.pth
+
+If your bundles are elsewhere, set an environment variable:
+  MODEL_DIR=<full path to folder containing *_bundle.pth>
+
+
+2) RUN LOCALLY ON WINDOWS (recommended first)
+---------------------------------------------
+IMPORTANT (PyTorch compatibility):
+  This API requires PyTorch. If you only have Python 3.13 installed, Torch may fail to install.
+  Recommended: install Python 3.11 (64-bit) and ensure the Windows "py" launcher can find it.
+
+Open PowerShell and run:
+
+  cd "D:\CSE498 Research Updated\API"
+  .\run.ps1
+
+Then open:
+  http://127.0.0.1:8000/docs
+
+Check that your models show up at:
+  http://127.0.0.1:8000/models
+
+
+3) TEST A PREDICTION (from another terminal)
+--------------------------------------------
+First list models:
+
+  curl http://127.0.0.1:8000/models
+
+Pick a model_id (example: SomeModel_bundle.pth), then run:
+
+  python -m venv .venv_client
+  .\.venv_client\Scripts\activate
+  pip install requests
+
+  python client_example.py --model-id "YOUR_BUNDLE_FILENAME_bundle.pth" --image "PATH\TO\IMAGE.jpg"
+
+
+4) USE FROM AN EDGE DEVICE ON YOUR NETWORK
+------------------------------------------
+If you want the API reachable from other devices (phone/Jetson/RPi/etc):
+
+Run the server with:
+  set API_HOST=0.0.0.0
+  set API_PORT=8000
+
+In PowerShell:
+  $env:API_HOST="0.0.0.0"
+  $env:API_PORT="8000"
+  cd "D:\CSE498 Research Updated\API"
+  .\run.ps1
+
+Then on another device, call:
+  http://<YOUR_PC_IP>:8000/docs
+
+IMPORTANT: You may need to allow inbound Windows Firewall for TCP 8000.
+
+
+5) DEPLOY WITH DOCKER (common for edge Linux)
+---------------------------------------------
+From the API folder:
+
+  docker build -t cse498-model-api .
+
+You must mount the folder that contains your *_bundle.pth files into the container.
+
+Example (Linux):
+  docker run --rm -p 8000:8000 \
+    -e MODEL_DIR=/models \
+    -v /path/to/your/models:/models \
+    cse498-model-api
+
+Example (Windows PowerShell):
+  docker run --rm -p 8000:8000 `
+    -e MODEL_DIR=/models `
+    -v "D:\CSE498 Research Updated\CSE498R models:/models" `
+    cse498-model-api
+
+
+6) NOTES FOR REAL EDGE OPTIMIZATION
+-----------------------------------
+Serving .pth bundles uses PyTorch and can be heavy on small devices.
+For best edge performance:
+
+  A) Export each trained model to ONNX
+  B) Run inference with ONNX Runtime (CPU) or TensorRT (Jetson)
+
+This scaffold is meant to get you a working API first; once you confirm it works,
+we can add an ONNX backend and an /export_onnx helper.
+
